@@ -3,7 +3,7 @@ namespace App\Http\Controllers;
 use App\Models\{Event,Game,Program,EventAgendaItem,EventBudget,EventExpense,Rating}; use Illuminate\Http\Request; use Illuminate\Support\Facades\Auth;
 class EventController extends Controller {
  public function dashboard(){ $events=Event::withCount('agendaItems')->orderBy('event_date')->take(6)->get(); return view('dashboard',compact('events')); }
- public function index(){return view('events.index',['events'=>Event::latest()->get()]);}
+ public function index(Request $request){$search=$request->string('search')->trim()->toString(); $events=Event::when($search,fn($query)=>$query->where(fn($q)=>$q->where('name','like',"%{$search}%")->orWhere('venue','like',"%{$search}%")->orWhere('description','like',"%{$search}%")))->latest()->get(); return view('events.index',compact('events','search'));}
  public function create(){return view('events.form',['event'=>new Event]);}
  public function store(Request $r){$data=$r->validate(['name'=>'required','event_date'=>'required|date','start_time'=>'nullable','end_time'=>'nullable','description'=>'nullable','venue'=>'nullable','invitation_title'=>'nullable','invitation_message'=>'nullable']); $data['created_by']=Auth::id(); $event=Event::create($data); return redirect()->route('events.show',$event)->with('success','Event created — build its agenda next.');}
  public function show(Event $event){$event->load(['agendaItems.item','expenses','budget']); $games=Game::where('status',1)->get(); $programs=Program::where('status',1)->get(); return view('events.show',compact('event','games','programs'));}
