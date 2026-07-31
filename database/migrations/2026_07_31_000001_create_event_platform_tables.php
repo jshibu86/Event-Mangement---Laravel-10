@@ -1,0 +1,20 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void {
+        Schema::create('games', function (Blueprint $t) { $t->id(); $t->string('name'); $t->string('slug')->unique(); $t->text('description')->nullable(); $t->json('video_urls')->nullable(); $t->unsignedInteger('min_players')->nullable(); $t->unsignedInteger('max_players')->nullable(); $t->string('category')->nullable(); $t->boolean('status')->default(true); $t->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); $t->softDeletes(); $t->timestamps(); });
+        Schema::create('programs', function (Blueprint $t) { $t->id(); $t->string('name'); $t->string('slug')->unique(); $t->text('description')->nullable(); $t->json('video_urls')->nullable(); $t->string('category')->nullable(); $t->boolean('status')->default(true); $t->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); $t->softDeletes(); $t->timestamps(); });
+        foreach (['game_attachments' => 'game_id', 'program_attachments' => 'program_id'] as $table => $foreign) { Schema::create($table, function (Blueprint $t) use ($foreign) { $t->id(); $t->foreignId($foreign)->constrained()->cascadeOnDelete(); $t->string('file_path'); $t->string('file_type'); $t->string('original_name'); $t->timestamps(); }); }
+        Schema::create('events', function (Blueprint $t) { $t->id(); $t->string('name'); $t->text('description')->nullable(); $t->date('event_date'); $t->time('start_time')->nullable(); $t->time('end_time')->nullable(); $t->string('venue')->nullable(); $t->string('invitation_title')->nullable(); $t->text('invitation_message')->nullable(); $t->string('invitation_image')->nullable(); $t->enum('status',['draft','verified','completed'])->default('draft'); $t->timestamp('verified_at')->nullable(); $t->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete(); $t->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); $t->softDeletes(); $t->timestamps(); });
+        Schema::create('event_agenda_items', function (Blueprint $t) { $t->id(); $t->foreignId('event_id')->constrained()->cascadeOnDelete(); $t->enum('item_type',['game','program']); $t->unsignedBigInteger('item_id'); $t->string('title_override')->nullable(); $t->time('start_time'); $t->time('end_time')->nullable(); $t->unsignedInteger('sequence')->default(0); $t->decimal('expense_amount',12,2)->default(0); $t->text('expense_notes')->nullable(); $t->text('notes')->nullable(); $t->timestamps(); $t->index(['item_type','item_id']); });
+        Schema::create('event_budgets', function (Blueprint $t) { $t->id(); $t->foreignId('event_id')->unique()->constrained()->cascadeOnDelete(); $t->decimal('total_budget',12,2)->nullable(); $t->text('notes')->nullable(); $t->timestamps(); });
+        Schema::create('event_expenses', function (Blueprint $t) { $t->id(); $t->foreignId('event_id')->constrained()->cascadeOnDelete(); $t->string('title'); $t->string('category')->nullable(); $t->decimal('amount',12,2); $t->text('notes')->nullable(); $t->timestamps(); });
+        Schema::create('ratings', function (Blueprint $t) { $t->id(); $t->foreignId('event_id')->constrained()->cascadeOnDelete(); $t->foreignId('event_agenda_item_id')->constrained()->cascadeOnDelete(); $t->unsignedTinyInteger('rating_value'); $t->text('feedback')->nullable(); $t->foreignId('rated_by')->nullable()->constrained('users')->nullOnDelete(); $t->timestamps(); });
+        Schema::create('app_settings', function (Blueprint $t) { $t->id(); $t->string('key')->unique(); $t->text('value')->nullable(); $t->timestamps(); });
+    }
+    public function down(): void { Schema::dropIfExists('app_settings'); Schema::dropIfExists('ratings'); Schema::dropIfExists('event_expenses'); Schema::dropIfExists('event_budgets'); Schema::dropIfExists('event_agenda_items'); Schema::dropIfExists('events'); Schema::dropIfExists('program_attachments'); Schema::dropIfExists('game_attachments'); Schema::dropIfExists('programs'); Schema::dropIfExists('games'); }
+};
