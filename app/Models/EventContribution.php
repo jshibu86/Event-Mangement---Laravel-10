@@ -1,0 +1,3 @@
+<?php
+namespace App\Models; use Illuminate\Database\Eloquent\Model;
+class EventContribution extends Model { protected $guarded=[]; protected $casts=['amount_due'=>'decimal:2','amount_paid'=>'decimal:2','paid_at'=>'datetime']; public function event(){return $this->belongsTo(Event::class);} public function contributor(){return $this->belongsTo(Contributor::class);} public function refreshPaymentStatus(): void {$due=(float)$this->amount_due;$paid=(float)$this->amount_paid;$this->payment_status=$paid<=0?'not_paid':($paid >= $due?'paid':'partial');$this->paid_at=$this->payment_status==='paid' ? ($this->paid_at ?: now()) : null;} }
