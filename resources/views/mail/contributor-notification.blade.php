@@ -1,1 +1,12 @@
-<!doctype html><html><body style="margin:0;background:#f7f7fb;font-family:Arial,sans-serif;color:#29233b"><div style="max-width:620px;margin:28px auto;background:#fff;border-radius:18px;overflow:hidden"><div style="padding:26px;background:linear-gradient(115deg,#47216e,#bd4167);color:#fff"><h1 style="margin:0;font-size:23px">Festiva</h1></div><div style="padding:28px;line-height:1.65">{!! $bodyHtml !!}</div></div></body></html>
+@component('mail::message')
+# A message from {{ $brandName }}
+
+@component('mail::panel')
+{!! $bodyHtml !!}
+@endcomponent
+
+If you have any questions, please reply to this email and our event team will be glad to help.
+
+Thanks,<br>
+**The {{ $brandName }} Team**
+@endcomponent
