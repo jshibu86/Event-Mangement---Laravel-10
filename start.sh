@@ -2,7 +2,9 @@
 
 set -e
 
-php artisan migrate --seed --force
+php artisan migrate --force
+
+php artisan storage:link
 
 php artisan package:discover --ansi
 

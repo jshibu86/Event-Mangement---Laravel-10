@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use App\Models\{Game, Program};
 use App\Models\AppSetting;
 use Illuminate\Support\Facades\Schema;
-
+use Illuminate\Support\Facades\URL;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -29,16 +29,28 @@ class AppServiceProvider extends ServiceProvider
     //         view()->share('brandLogo', AppSetting::value('logo'));
     //     }
     // }
-    public function boot(): void
+     public function boot(): void
     {
         Relation::morphMap([
             'game' => Game::class,
             'program' => Program::class,
         ]);
 
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         if (!app()->runningInConsole() && Schema::hasTable('app_settings')) {
-            view()->share('brandName', AppSetting::value('site_name', 'Festiva'));
-            view()->share('brandLogo', AppSetting::value('logo'));
+            view()->share(
+                'brandName',
+                AppSetting::value('site_name', 'Festiva')
+            );
+
+            view()->share(
+                'brandLogo',
+                AppSetting::value('logo')
+            );
         }
     }
+
 }
