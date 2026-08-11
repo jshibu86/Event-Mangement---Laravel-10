@@ -21,10 +21,22 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
+    // public function boot(): void
+    // {
+    //     Relation::morphMap(['game' => Game::class, 'program' => Program::class]);
+    //     if (Schema::hasTable('app_settings')) {
+    //         view()->share('brandName', AppSetting::value('site_name', 'Festiva'));
+    //         view()->share('brandLogo', AppSetting::value('logo'));
+    //     }
+    // }
     public function boot(): void
     {
-        Relation::morphMap(['game' => Game::class, 'program' => Program::class]);
-        if (Schema::hasTable('app_settings')) {
+        Relation::morphMap([
+            'game' => Game::class,
+            'program' => Program::class,
+        ]);
+
+        if (!app()->runningInConsole() && Schema::hasTable('app_settings')) {
             view()->share('brandName', AppSetting::value('site_name', 'Festiva'));
             view()->share('brandLogo', AppSetting::value('logo'));
         }

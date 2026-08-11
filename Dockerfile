@@ -59,7 +59,8 @@ COPY . .
 RUN composer install \
     --no-dev \
     --optimize-autoloader \
-    --no-interaction
+    --no-interaction \
+    --no-scripts
 
 COPY --from=frontend /app/public/build ./public/build
 
@@ -67,6 +68,10 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 
 RUN chmod -R 775 storage bootstrap/cache
 
+COPY start.sh /start.sh
+
+RUN chmod +x /start.sh
+
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD ["/start.sh"]
