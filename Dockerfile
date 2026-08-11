@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libzip-dev \
+    libpq-dev \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
@@ -29,6 +30,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install \
         pdo \
         pdo_mysql \
+        pdo_pgsql \
         mbstring \
         exif \
         pcntl \
