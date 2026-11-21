@@ -2,55 +2,37 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use App\Models\{Game, Program, AppSetting};
 use Illuminate\Database\Eloquent\Relations\Relation;
-use App\Models\{Game, Program};
-use App\Models\AppSetting;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
+
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
-    // public function boot(): void
-    // {
-    //     Relation::morphMap(['game' => Game::class, 'program' => Program::class]);
-    //     if (Schema::hasTable('app_settings')) {
-    //         view()->share('brandName', AppSetting::value('site_name', 'Festiva'));
-    //         view()->share('brandLogo', AppSetting::value('logo'));
-    //     }
-    // }
-     public function boot(): void
+    public function boot(): void
     {
         Relation::morphMap([
-            'game' => Game::class,
+            'game'    => Game::class,
             'program' => Program::class,
         ]);
 
-        if (app()->environment('production')) {
+        // Force https only when APP_URL itself is https
+        if (str_starts_with((string) config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
 
         if (!app()->runningInConsole() && Schema::hasTable('app_settings')) {
-            view()->share(
-                'brandName',
-                AppSetting::value('site_name', 'Festiva')
-            );
+            $logo = AppSetting::value('logo');
 
-            view()->share(
-                'brandLogo',
-                AppSetting::value('logo')
-            );
+            view()->share('brandName', AppSetting::value('site_name', 'Festiva'));
+            view()->share('brandLogo', $logo);                          // raw path
+            view()->share('brandLogoUrl', AppSetting::fileUrl($logo));  // ready-to-use URL (null if no logo)
         }
     }
-
 }

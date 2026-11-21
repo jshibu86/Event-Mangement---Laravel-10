@@ -1,7 +1,13 @@
 <x-mail::layout>
 {{-- Header --}}
 <x-slot:header>
-<x-mail::header :url="config('app.url')">
+<x-mail::header
+    :url="config('app.url')"
+    :brand-name="$brandName ?? config('app.name')"
+    :logo-data="$logoData ?? null"
+    :logo-name="$logoName ?? null"
+    :logo-mime="$logoMime ?? null"
+    :message="$message ?? null">
 {{ config('app.name') }}
 </x-mail::header>
 </x-slot:header>

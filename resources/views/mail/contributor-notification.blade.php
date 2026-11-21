@@ -1,4 +1,10 @@
-@component('mail::message')
+@component('mail::message', [
+    'brandName' => $brandName,
+    'logoData'  => $logoData,
+    'logoName'  => $logoName,
+    'logoMime'  => $logoMime,
+    'message'   => $message,
+])
 # A message from {{ $brandName }}
 
 @component('mail::panel')
