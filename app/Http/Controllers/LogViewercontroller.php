@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 class LogViewerController extends Controller
 {
     /** Read at most the last 1 MB of the log file, so big logs stay fast. */
+    // Change Name
     private const READ_BYTES = 1048576;
 
     private const LEVELS = [
