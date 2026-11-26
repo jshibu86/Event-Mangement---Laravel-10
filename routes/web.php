@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{MasterController,EventController,AgendaPdfController,SettingsController,ContributorController,CollectionController,NotificationController};
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\LogViewerController;
+use App\Http\Controllers\LogViewercontroller;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -38,5 +38,5 @@ Route::get('events/{event}/notifications',[NotificationController::class,'show']
 
 // Log Actions
 
-Route::get('/logs', [LogViewerController::class, 'index'])->name('logs.index');
-Route::post('/logs/clear', [LogViewerController::class, 'clear'])->name('logs.clear');
+Route::get('/logs', [LogViewercontroller::class, 'index'])->name('logs.index');
+Route::post('/logs/clear', [LogViewercontroller::class, 'clear'])->name('logs.clear');

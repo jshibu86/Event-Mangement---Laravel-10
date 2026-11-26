@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class LogViewerController extends Controller
+class LogViewercontroller extends Controller
 {
     /** Read at most the last 1 MB of the log file, so big logs stay fast. */
     // Change Name
