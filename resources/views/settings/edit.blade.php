@@ -1,1 +1,229 @@
-@extends('layouts.app') @section('content')<div class="row justify-content-center"><div class="col-lg-9"><h2>Settings</h2><form method="post" action="{{route('settings.update')}}" enctype="multipart/form-data">@csrf @method('PUT')<div class="card p-4 mb-4"><h4>Brand settings</h4><div class="mb-3"><label>Application name</label><input class="form-control" name="site_name" value="{{$settings['site_name']}}" required></div><div class="mb-3"><label>Logo</label><input class="form-control" type="file" name="logo" accept="image/*">@if(!empty($brandLogoUrl))<img class="mt-2" style="max-height:70px" src="{{ $brandLogoUrl }}" alt="Current logo">@endif</div><div class="row"><div class="col"><label>Currency</label><input class="form-control" name="currency_symbol" value="{{$settings['currency_symbol']}}"></div><div class="col"><label>PDF footer</label><input class="form-control" name="pdf_footer" value="{{$settings['pdf_footer']}}"></div></div></div><div class="card p-4 mb-4"><h4>Mail configuration</h4><div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="mail_sandbox_mode" value="1" @checked($settings['mail_sandbox_mode']!=='0')><label class="form-check-label">Sandbox mode (Mailtrap) — keep this on while testing</label></div><div class="row"><div class="col-md-6"><h6>Gmail live sender</h6><input class="form-control mb-2" name="mail_gmail_address" type="email" placeholder="Gmail address" value="{{$settings['mail_gmail_address']}}"><input class="form-control mb-2" name="mail_gmail_app_password" type="password" placeholder="{{$settings['has_gmail_password']?'•••••••• (enter only to change)':'Gmail App Password'}}"><input class="form-control" name="mail_from_name" placeholder="Sender name" value="{{$settings['mail_from_name']}}"></div><div class="col-md-6"><h6>Mailtrap sandbox</h6><input class="form-control mb-2" name="mailtrap_host" placeholder="SMTP host" value="{{$settings['mailtrap_host']}}"><div class="row g-2 mb-2"><div class="col"><input class="form-control" name="mailtrap_port" placeholder="Port" value="{{$settings['mailtrap_port']}}"></div><div class="col"><input class="form-control" name="mailtrap_username" placeholder="Username" value="{{$settings['mailtrap_username']}}"></div></div><input class="form-control" name="mailtrap_password" type="password" placeholder="{{$settings['has_mailtrap_password']?'•••••••• (enter only to change)':'SMTP password'}}"></div></div><details class="mt-3"><summary>How to set this up</summary><p class="mt-2 mb-0">For Gmail, enable 2-Step Verification then create an App Password under Google Account → Security → App Passwords; regular passwords do not work. Mailtrap sandbox catches test messages in a private inbox—find SMTP credentials in Mailtrap → Email Testing → Inbox → SMTP Settings. Switch Sandbox off before sending live messages.</p></details></div><button class="btn btn-primary">Save settings</button></form><div class="card p-4 mt-4"><h5>Send test email</h5><div class="input-group"><input id="test-email" class="form-control" type="email" placeholder="Recipient email"><button id="test-mail" class="btn btn-outline-primary">Send test</button></div></div></div></div><script>document.getElementById('test-mail').onclick=async()=>{let r=await fetch('{{route('settings.mail.test')}}',{method:'POST',headers:{'X-CSRF-TOKEN':'{{csrf_token()}}','Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({test_email:document.getElementById('test-email').value})});let j=await r.json();alert(r.ok?'Test email sent.':j.message)}</script>@endsection
+
+@extends('layouts.app')
+
+@section('content')
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <h2>Settings</h2>
+
+            <form
+                method="POST"
+                action="{{ route('settings.update') }}"
+                enctype="multipart/form-data"
+            >
+                @csrf
+                @method('PUT')
+
+                {{-- Brand Settings --}}
+                <div class="card p-4 mb-4">
+                    <h4>Brand settings</h4>
+
+                    <div class="mb-3">
+                        <label>Application name</label>
+                        <input
+                            class="form-control"
+                            name="site_name"
+                            value="{{ $settings['site_name'] }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Logo</label>
+                        <input
+                            class="form-control"
+                            type="file"
+                            name="logo"
+                            accept="image/*"
+                        >
+
+                        @if (!empty($brandLogoUrl))
+                            <img
+                                class="mt-2"
+                                style="max-height: 70px"
+                                src="{{ $brandLogoUrl }}"
+                                alt="Current logo"
+                            >
+                        @endif
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <label>Currency</label>
+                            <input
+                                class="form-control"
+                                name="currency_symbol"
+                                value="{{ $settings['currency_symbol'] }}"
+                            >
+                        </div>
+
+                        <div class="col">
+                            <label>PDF footer</label>
+                            <input
+                                class="form-control"
+                                name="pdf_footer"
+                                value="{{ $settings['pdf_footer'] }}"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Mail Configuration --}}
+                <div class="card p-4 mb-4">
+                    <h4>Mail configuration</h4>
+
+                    <div class="form-check form-switch mb-3">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="mail_sandbox_mode"
+                            value="1"
+                            @checked($settings['mail_sandbox_mode'] !== '0')
+                        >
+
+                        <label class="form-check-label">
+                            Sandbox mode (Mailtrap) — keep this on while testing
+                        </label>
+                    </div>
+
+                    <div class="row">
+                        {{-- Gmail Live Sender --}}
+                        <div class="col-md-6">
+                            <h6>Gmail live sender</h6>
+
+                            <input
+                                class="form-control mb-2"
+                                name="mail_gmail_address"
+                                type="email"
+                                placeholder="Gmail address"
+                                value="{{ $settings['mail_gmail_address'] }}"
+                            >
+
+                            <input
+                                class="form-control mb-2"
+                                name="mail_gmail_app_password"
+                                type="password"
+                                placeholder="{{ $settings['has_gmail_password'] ? '•••••••• (enter only to change)' : 'Gmail App Password' }}"
+                            >
+
+                            <input
+                                class="form-control"
+                                name="mail_from_name"
+                                placeholder="Sender name"
+                                value="{{ $settings['mail_from_name'] }}"
+                            >
+                        </div>
+
+                        {{-- Mailtrap Sandbox --}}
+                        <div class="col-md-6">
+                            <h6>Mailtrap sandbox</h6>
+
+                            <input
+                                class="form-control mb-2"
+                                name="mailtrap_host"
+                                placeholder="SMTP host"
+                                value="{{ $settings['mailtrap_host'] }}"
+                            >
+
+                            <div class="row g-2 mb-2">
+                                <div class="col">
+                                    <input
+                                        class="form-control"
+                                        name="mailtrap_port"
+                                        placeholder="Port"
+                                        value="{{ $settings['mailtrap_port'] }}"
+                                    >
+                                </div>
+
+                                <div class="col">
+                                    <input
+                                        class="form-control"
+                                        name="mailtrap_username"
+                                        placeholder="Username"
+                                        value="{{ $settings['mailtrap_username'] }}"
+                                    >
+                                </div>
+                            </div>
+
+                            <input
+                                class="form-control"
+                                name="mailtrap_password"
+                                type="password"
+                                placeholder="{{ $settings['has_mailtrap_password'] ? '•••••••• (enter only to change)' : 'SMTP password' }}"
+                            >
+                        </div>
+                    </div>
+
+                    <details class="mt-3">
+                        <summary>How to set this up</summary>
+
+                        <p class="mt-2 mb-0">
+                            For Gmail, enable 2-Step Verification then create
+                            an App Password under Google Account → Security →
+                            App Passwords; regular passwords do not work.
+                            Mailtrap sandbox catches test messages in a private
+                            inbox—find SMTP credentials in Mailtrap →
+                            Email Testing → Inbox → SMTP Settings.
+                            Switch Sandbox off before sending live messages.
+                        </p>
+                    </details>
+                </div>
+
+                <button class="btn btn-primary">
+                    Save settings
+                </button>
+            </form>
+
+            {{-- Send Test Email --}}
+            <div class="card p-4 mt-4">
+                <h5>Send test email</h5>
+
+                <div class="input-group">
+                    <input
+                        id="test-email"
+                        class="form-control"
+                        type="email"
+                        placeholder="Recipient email"
+                    >
+
+                    <button
+                        id="test-mail"
+                        class="btn btn-outline-primary"
+                        type="button"
+                    >
+                        Send test
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('test-mail').onclick = async () => {
+            const recipientEmail = document.getElementById('test-email').value;
+
+            const response = await fetch(
+                '{{ route('settings.mail.test') }}',
+                {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        test_email: recipientEmail,
+                    }),
+                }
+            );
+
+            const result = await response.json();
+
+            alert(
+                response.ok
+                    ? 'Test email sent.'
+                    : result.message
+            );
+        };
+    </script>
+@endsection

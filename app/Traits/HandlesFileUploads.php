@@ -2,83 +2,66 @@
 
 namespace App\Traits;
 
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\MediaCollection;
 
 trait HandlesFileUploads
 {
-    public static function mediaDisk(): string
+    use InteractsWithMedia;
+
+    /** Production => S3, otherwise local public disk. */
+    public static function mediaDisk(bool $public = false): string
     {
-        return config('filesystems.media_disk', 'public');
+        $disk = config('filesystems.media_disk', 'public');
+
+        return $disk === 's3' && $public ? 's3_public' : $disk;
     }
 
-    /**
-     * Store one file and return its relative path (save this in the database).
-     * If $oldPath is given, the old file is deleted after the new one is saved.
-     */
-    public static function uploadFile(UploadedFile $file, string $folder = 'uploads', ?string $oldPath = null): string
-    {
-        $name = Str::uuid() . '.' . $file->extension();   // extension guessed from real MIME type
-        $path = $file->storeAs(trim($folder, '/'), $name, static::mediaDisk());
+    /** Use inside registerMediaCollections(). */
+    protected function collection(
+        string $name,
+        bool $public = false,
+        bool $single = false,
+        ?array $mimes = null
+    ): MediaCollection {
+        $collection = $this->addMediaCollection($name)
+            ->useDisk(static::mediaDisk($public));
 
-        if ($path === false) {
-            throw new \RuntimeException('File upload failed.');
+        if ($single) {
+            $collection->singleFile(); // new upload deletes the old file
+        }
+        if ($mimes) {
+            $collection->acceptsMimeTypes($mimes);
         }
 
-        if ($oldPath) {
-            static::deleteFile($oldPath);
-        }
-
-        return $path;
+        return $collection;
     }
 
-    /** Store several files and return an array of paths. */
-    public static function uploadFiles(array $files, string $folder = 'uploads'): array
+    /** URL for public files, expiring URL for private S3 files. */
+    public function mediaUrl(string $collection, int $minutes = 10): ?string
     {
-        return collect($files)
-            ->map(fn ($file) => static::uploadFile($file, $folder))
-            ->all();
-    }
+        $media = $this->getFirstMedia($collection);
 
-    public static function deleteFile(?string $path): bool
-    {
-        if (!$path) {
-            return false;
-        }
-
-        return Storage::disk(static::mediaDisk())->delete($path);
-    }
-
-    /** Public URL (works for the branding/ folder you made public on S3). */
-    public static function fileUrl(?string $path): ?string
-    {
-        return $path ? Storage::disk(static::mediaDisk())->url($path) : null;
-    }
-
-    /** Expiring link for private S3 files such as expense bills. Falls back to url() on local disk. */
-    public static function privateFileUrl(?string $path, int $minutes = 10): ?string
-    {
-        if (!$path) {
+        if (!$media) {
             return null;
         }
 
-        $disk = Storage::disk(static::mediaDisk());
-
-        return static::mediaDisk() === 's3'
-            ? $disk->temporaryUrl($path, now()->addMinutes($minutes))
-            : $disk->url($path);
+        return $media->disk === 's3'
+            ? $media->getTemporaryUrl(now()->addMinutes($minutes))
+            : $media->getUrl();
     }
 
-    /** Base64 data URI, useful for images inside DomPDF templates. */
-    public static function fileDataUri(?string $path): ?string
+    /** Base64 data URI for DomPDF templates. */
+    public function mediaDataUri(string $collection): ?string
     {
-        $disk = Storage::disk(static::mediaDisk());
+        $media = $this->getFirstMedia($collection);
 
-        if (!$path || !$disk->exists($path)) {
+        if (!$media || !Storage::disk($media->disk)->exists($media->getPathRelativeToRoot())) {
             return null;
         }
 
-        return 'data:' . $disk->mimeType($path) . ';base64,' . base64_encode($disk->get($path));
+        return 'data:' . $media->mime_type . ';base64,'
+            . base64_encode(Storage::disk($media->disk)->get($media->getPathRelativeToRoot()));
     }
 }
