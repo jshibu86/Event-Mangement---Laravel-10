@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{MasterController,EventController,AgendaPdfController,SettingsController,ContributorController,CollectionController,NotificationController};
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-
+use App\Http\Controllers\LogViewerController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -35,3 +35,8 @@ Route::get('events/{event}/agenda/{agendaItem}/edit',[EventController::class,'ed
 Route::get('events/{event}/collection',[CollectionController::class,'show'])->name('events.collection'); Route::patch('events/{event}/collection/per-head',[CollectionController::class,'setPerHead'])->name('events.collection.per-head'); Route::post('events/{event}/collection',[CollectionController::class,'add'])->name('events.collection.add'); Route::patch('events/{event}/collection/{contribution}/payment',[CollectionController::class,'payment'])->name('events.collection.payment'); Route::delete('events/{event}/collection/{contribution}',[CollectionController::class,'remove'])->name('events.collection.remove'); Route::get('events/{event}/collection/pdf',[CollectionController::class,'pdf'])->name('events.collection.pdf');
 Route::get('events/{event}/notifications',[NotificationController::class,'show'])->name('events.notifications'); Route::post('events/{event}/notifications',[NotificationController::class,'send'])->name('events.notifications.send');
 });
+
+// Log Actions
+
+Route::get('/logs', [LogViewerController::class, 'index'])->name('logs.index');
+Route::post('/logs/clear', [LogViewerController::class, 'clear'])->name('logs.clear');
