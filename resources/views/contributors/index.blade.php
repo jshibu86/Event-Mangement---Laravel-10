@@ -43,6 +43,7 @@
     <table class="table align-middle">
         <thead>
             <tr>
+                <th style="width: 70px;">Photo</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
@@ -55,6 +56,23 @@
         <tbody>
             @forelse($contributors as $person)
                 <tr class="{{ $person->status ? '' : 'text-muted' }}">
+                    <td>
+                        @if ($photo = $person->mediaUrl('photo'))
+                            <img
+                                src="{{ $photo }}"
+                                alt="{{ $person->name }}"
+                                class="rounded-circle"
+                                style="width: 44px; height: 44px; object-fit: cover;"
+                            >
+                        @else
+                            <span
+                                class="rounded-circle bg-secondary-subtle text-secondary d-inline-flex align-items-center justify-content-center fw-bold"
+                                style="width: 44px; height: 44px;"
+                            >
+                                {{ strtoupper(mb_substr($person->name, 0, 1)) }}
+                            </span>
+                        @endif
+                    </td>
                     <td>
                         <strong>{{ $person->name }}</strong>
                     </td>
@@ -88,6 +106,7 @@
                             data-email="{{ $person->email }}"
                             data-phone="{{ $person->phone }}"
                             data-description="{{ $person->description }}"
+                            data-photo="{{ $person->mediaUrl('photo') }}"
                             data-action="{{ route('contributors.update', $person) }}"
                         >
                             Edit
@@ -112,6 +131,7 @@
             class="modal-content"
             method="post"
             action="{{ route('contributors.store') }}"
+            enctype="multipart/form-data"
         >
             @csrf
 
@@ -159,6 +179,16 @@
                         name="description"
                     ></textarea>
                 </div>
+                <div class="mb-3">
+                    <label>Photo</label>
+                    <input
+                        class="form-control"
+                        type="file"
+                        name="photo"
+                        accept=".jpg,.jpeg,.png,.webp"
+                    >
+                    <small class="text-muted">Optional (JPG, PNG or WEBP, max 2 MB)</small>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -178,6 +208,7 @@
             class="modal-content"
             method="post"
             action=""
+            enctype="multipart/form-data"
         >
             @csrf
             @method('PUT')
@@ -229,6 +260,37 @@
                         class="form-control"
                         name="description"
                     ></textarea>
+                </div>
+                <div class="mb-3">
+                    <label>Photo</label>
+
+                    <div class="mb-2">
+                        <img
+                            id="editPhotoPreview"
+                            class="rounded-circle d-none"
+                            style="width: 64px; height: 64px; object-fit: cover;"
+                            alt="Current photo"
+                        >
+                    </div>
+
+                    <input
+                        class="form-control"
+                        type="file"
+                        name="photo"
+                        accept=".jpg,.jpeg,.png,.webp"
+                    >
+                    <small class="text-muted">Leave empty to keep the current photo</small>
+
+                    <div class="form-check mt-2">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="remove_photo"
+                            value="1"
+                            id="removePhoto"
+                        >
+                        <label class="form-check-label" for="removePhoto">Remove current photo</label>
+                    </div>
                 </div>
             </div>
 
@@ -282,6 +344,17 @@
 
             document.getElementById('editDescription').value =
                 btn.dataset.description || '';
+                const preview = document.getElementById('editPhotoPreview');
+                if (btn.dataset.photo) {
+                    preview.src = btn.dataset.photo;
+                    preview.classList.remove('d-none');
+                } else {
+                    preview.removeAttribute('src');
+                    preview.classList.add('d-none');
+                }
+
+                document.getElementById('removePhoto').checked = false;
+                document.querySelector('#editForm input[name="photo"]').value = '';
         };
     });
 </script>

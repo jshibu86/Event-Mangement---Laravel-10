@@ -11,21 +11,19 @@ class ContributorController extends Controller
     {
         $search = $request->string('search')->trim()->toString();
 
-        $contributors = Contributor::when(
-            $search,
-            fn ($q) => $q->where(
-                fn ($x) => $x->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
+        $contributors = Contributor::with('media') // avoids one query per row
+            ->when(
+                $search,
+                fn ($q) => $q->where(
+                    fn ($x) => $x->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                )
             )
-        )
             ->latest()
             ->get();
 
-        return view(
-            'contributors.index',
-            compact('contributors', 'search')
-        );
+        return view('contributors.index', compact('contributors', 'search'));
     }
 
     public function store(Request $r)
@@ -35,9 +33,14 @@ class ContributorController extends Controller
             'email'       => 'nullable|email|max:255',
             'phone'       => 'nullable|max:50',
             'description' => 'nullable',
+            'photo'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        Contributor::create($data);
+        $contributor = Contributor::create(collect($data)->except('photo')->all());
+
+        if ($r->hasFile('photo')) {
+            $contributor->addMediaFromRequest('photo')->toMediaCollection('photo');
+        }
 
         return back()->with('success', 'Contributor added.');
     }
@@ -45,13 +48,21 @@ class ContributorController extends Controller
     public function update(Request $r, Contributor $contributor)
     {
         $data = $r->validate([
-            'name'        => 'required|max:255',
-            'email'       => 'nullable|email|max:255',
-            'phone'       => 'nullable|max:50',
-            'description' => 'nullable',
+            'name'         => 'required|max:255',
+            'email'        => 'nullable|email|max:255',
+            'phone'        => 'nullable|max:50',
+            'description'  => 'nullable',
+            'photo'        => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'remove_photo' => 'nullable|boolean',
         ]);
 
-        $contributor->update($data);
+        $contributor->update(collect($data)->except(['photo', 'remove_photo'])->all());
+
+        if ($r->hasFile('photo')) {
+            $contributor->addMediaFromRequest('photo')->toMediaCollection('photo');
+        } elseif ($r->boolean('remove_photo')) {
+            $contributor->clearMediaCollection('photo');
+        }
 
         return back()->with('success', 'Contributor updated.');
     }
